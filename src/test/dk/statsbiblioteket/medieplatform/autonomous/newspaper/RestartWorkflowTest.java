@@ -28,7 +28,7 @@ import java.util.Properties;
 import static org.testng.Assert.assertEquals;
 
 /**
- *
+ *  Test class for RestartWorkflow
  */
 public class RestartWorkflowTest {
 
