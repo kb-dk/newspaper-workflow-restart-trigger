@@ -64,7 +64,7 @@ fi
 [ -z "$waitTime" ] && waitTime=1000
 
 
-${JAVA_HOME}/bin/java -classpath $SCRIPT_PATH/../conf/:$SCRIPT_PATH/../lib/'*' dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow \
+$JAVA_HOME/bin/java -classpath $SCRIPT_PATH/../conf/:$SCRIPT_PATH/../lib/'*' dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow \
 "$config" "$batchId" "$roundTrip" "$maxAttempts" "$waitTime" "$event"
 
 
