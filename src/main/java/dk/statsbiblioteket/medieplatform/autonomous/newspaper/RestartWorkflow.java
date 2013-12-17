@@ -1,23 +1,30 @@
 package dk.statsbiblioteket.medieplatform.autonomous.newspaper;
 
-import dk.statsbiblioteket.doms.central.connectors.fedora.pidGenerator.PIDGeneratorException;
 import dk.statsbiblioteket.medieplatform.autonomous.CommunicationException;
 import dk.statsbiblioteket.medieplatform.autonomous.ConfigConstants;
 import dk.statsbiblioteket.medieplatform.autonomous.DomsEventClient;
 import dk.statsbiblioteket.medieplatform.autonomous.DomsEventClientFactory;
 import dk.statsbiblioteket.medieplatform.autonomous.NotFoundException;
 
-import javax.xml.bind.JAXBException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.Properties;
 
 /**
- *
+ *  Class containing main method for a restarting batch workflow.
  */
 public class RestartWorkflow {
+
+
+    /**
+     * Called when there is an error in the input arguments.
+     */
+    private static void usage() {
+        System.out.println("Usage:" +
+                "\n java dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow <config file> <batchId> <roundTrip> <maxAttempts> <waitTime (milliseconds> [<eventName>] ");
+        System.exit(1);
+    }
 
     /**
      * Resets the events registered in DOMS so that the newspaper ingest workflow will be restarted. The method
@@ -39,7 +46,7 @@ public class RestartWorkflow {
 
         if (args.length < 5 || args.length > 6) {
             System.out.println("Argument list is too short");
-            System.exit(1);
+            usage();
         }
 
         String configFilePath = args[0];
@@ -77,12 +84,27 @@ public class RestartWorkflow {
         }
 
 
-        int roundTrip;
-        roundTrip = Integer.parseInt(roundTripString);
-        int maxAttempts;
-        maxAttempts = Integer.parseInt(maxAttemptsString);
-        long waitTime;
-        waitTime = Long.parseLong(maxWaitString);
+        int roundTrip = 0;
+        try {
+            roundTrip = Integer.parseInt(roundTripString);
+        } catch (NumberFormatException e) {
+            System.out.println("roundTrip parameter is not a number: " + roundTripString);
+            usage();
+        }
+        int maxAttempts = 0;
+        try {
+            maxAttempts = Integer.parseInt(maxAttemptsString);
+        } catch (NumberFormatException e) {
+            System.out.println("maxAttempts paramter is not a number: " + maxAttemptsString);
+            usage();
+        }
+        long waitTime = 0L;
+        try {
+            waitTime = Long.parseLong(maxWaitString);
+        } catch (NumberFormatException e) {
+            System.out.println("waitTime parameter is not a number: " + maxWaitString);
+            usage();
+        }
 
         int eventsRemoved;
         try {
