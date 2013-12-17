@@ -26,7 +26,16 @@ chronologically earliest component which failed.
 In rarer cases, such as where a bug caused a component to give a spuriously successful result, one may also need to be
 able to restart the workflow from an arbitrary position.
 
-This package provides a command-line tool capable of handling all these scenarios.
+This package provides a command-line tool capable of handling these scenarios.
+
+#Packaging And Installation#
+
+The release consists of a single .tar.gz archive which unpacks to a directory containg `lib`, `conf` and `bin` subdirectories. There
+is a single script `restart-workflow.sh` in the `bin` directory. Running this without any parameters will output a usage summary. The `conf`
+directory contains a sample properties file and logback configuration, and all dependencies are in the `lib` directory.
+
+The applications has a negligible I/O, CPU and diskspace footprint and requires access only to DOMS/fedora to function.
+
 
 #Usage#
 
