@@ -9,9 +9,11 @@ shopt -s nullglob
 
 SCRIPT_PATH=$(dirname $(readlink -f $0))
 
+config=$(dirname $SCRIPT_PATH)/conf/config.properties
+
 print_usage()
 {
-    echo "Usage: $(basename $0) -c <config_file> -b <batch_number> -n <round_trip_number> [-m <max_attempts>] [-s <max_wait>] [-e <event_name>]"
+    echo "Usage: $(basename $0) -b <batch_number> -n <round_trip_number>  [-c <config_file>] [-m <max_attempts>] [-s <max_wait>] [-e <event_name>]"
     echo "-c    Path to configuration (java properties) file"
     echo "-b    The number of the batch to be reprocessed"
     echo "-n    The number of the round-trip to be reprocessed"
