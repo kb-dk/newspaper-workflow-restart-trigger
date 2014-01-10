@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>newspaper-workflow-restart-trigger</artifactId>
-    <version>1.3-SNAPSHOT</version>
+    <version>1.4-SNAPSHOT</version>
 
     <scm>
         <url>https://github.com/statsbiblioteket/newspaper-workflow-restart-trigger</url>
@@ -22,7 +22,7 @@
         <dependency>
             <groupId>dk.statsbiblioteket.newspaper</groupId>
             <artifactId>doms-event-client</artifactId>
-            <version>1.3-SNAPSHOT</version>
+            <version>1.3</version>
             <exclusions>
                 <exclusion>
                     <artifactId>log4j</artifactId>
