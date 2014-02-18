@@ -1,4 +1,7 @@
-1.4 
+1.5
+* Updated to newspaper-parent 1.1.
+
+1.4
 * Update restart-workflow.sh script to version from JHLJ
 * Update dependencies for doms-event-client
 
