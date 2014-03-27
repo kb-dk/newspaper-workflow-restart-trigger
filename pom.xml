@@ -22,7 +22,7 @@
         <dependency>
             <groupId>dk.statsbiblioteket.newspaper</groupId>
             <artifactId>sboi-doms-event-framework</artifactId>
-            <version>1.6</version>
+            <version>1.7-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <artifactId>log4j</artifactId>
