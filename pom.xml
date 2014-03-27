@@ -21,8 +21,8 @@
     <dependencies>
         <dependency>
             <groupId>dk.statsbiblioteket.newspaper</groupId>
-            <artifactId>doms-event-client</artifactId>
-            <version>1.4</version>
+            <artifactId>sboi-doms-event-framework</artifactId>
+            <version>1.6</version>
             <exclusions>
                 <exclusion>
                     <artifactId>log4j</artifactId>
