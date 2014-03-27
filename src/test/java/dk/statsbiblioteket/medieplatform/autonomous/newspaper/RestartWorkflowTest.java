@@ -7,6 +7,7 @@ import dk.statsbiblioteket.medieplatform.autonomous.Batch;
 import dk.statsbiblioteket.medieplatform.autonomous.ConfigConstants;
 import dk.statsbiblioteket.medieplatform.autonomous.DomsEventStorage;
 import dk.statsbiblioteket.medieplatform.autonomous.DomsEventStorageFactory;
+import dk.statsbiblioteket.medieplatform.autonomous.NotFoundException;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -28,7 +29,7 @@ public class RestartWorkflowTest {
     private String batchId = "123";
     private int roundTrip = 12;
 
-    @BeforeTest
+    @BeforeTest(groups = "integrationTest")
     public void setUp() throws Exception {
         String pathToProperties = System.getProperty("integration.test.newspaper.properties");
         Properties properties = new Properties();
@@ -48,33 +49,38 @@ public class RestartWorkflowTest {
         deleteBatch();
     }
 
-    @AfterTest
+    @AfterTest(groups = "integrationTest")
     public void tearDown() throws Exception {
         deleteBatch();
     }
 
     public void deleteBatch() throws Exception {
-        Batch batch = domsEventClient.getBatch(batchId, roundTrip);
-        List<String> pids = fedora.findObjectFromDCIdentifier(batch.getFullID());
-        if (!pids.isEmpty()) {
-            fedora.deleteObject(pids.get(0), "Deleted in test.");
+        Batch batch = null;
+        try {
+            batch = domsEventClient.getBatch(batchId, roundTrip);
+            List<String> pids = fedora.findObjectFromDCIdentifier(batch.getFullID());
+            for (String pid : pids) {
+                fedora.deleteObject(pid, "Deleted in test.");
+            }
+        } catch (NotFoundException e) {
+            //fine, its gone
         }
     }
 
     @Test(groups = "integrationTest")
     public void testMain() throws Exception {
         String pathToProperties = System.getProperty("integration.test.newspaper.properties");
-        domsEventClient.createBatchRoundTrip("batchID", roundTrip);
-        domsEventClient.addEventToBatch("batchID", roundTrip, "me", new Date(100), "details", "e1", true);
-        domsEventClient.addEventToBatch("batchID", roundTrip, "me", new Date(200), "details", "e2", true);
-        domsEventClient.addEventToBatch("batchID", roundTrip, "me", new Date(300), "details", "e3", false);
-        domsEventClient.addEventToBatch("batchID", roundTrip, "me", new Date(400), "details", "e4", true);
-        domsEventClient.addEventToBatch("batchID", roundTrip, "me", new Date(500), "details", "e5", false);
-        RestartWorkflow.main(new String[] {pathToProperties, "batchID", roundTrip + "", "10", "100"});
-        Batch batch = domsEventClient.getBatch("batchID", roundTrip);
+        domsEventClient.createBatchRoundTrip(batchId, roundTrip);
+        domsEventClient.addEventToBatch(batchId, roundTrip, "me", new Date(100), "details", "e1", true);
+        domsEventClient.addEventToBatch(batchId, roundTrip, "me", new Date(200), "details", "e2", true);
+        domsEventClient.addEventToBatch(batchId, roundTrip, "me", new Date(300), "details", "e3", false);
+        domsEventClient.addEventToBatch(batchId, roundTrip, "me", new Date(400), "details", "e4", true);
+        domsEventClient.addEventToBatch(batchId, roundTrip, "me", new Date(500), "details", "e5", false);
+        RestartWorkflow.main(new String[] {pathToProperties, batchId, roundTrip + "", "10", "100"});
+        Batch batch = domsEventClient.getBatch(batchId, roundTrip);
         assertEquals(batch.getEventList().size(), 2);
-        RestartWorkflow.main(new String[] {pathToProperties, "batchID", roundTrip + "", "10", "100", "e1"});
-        batch = domsEventClient.getBatch("batchID", roundTrip);
+        RestartWorkflow.main(new String[] {pathToProperties, batchId, roundTrip + "", "10", "100", "e1"});
+        batch = domsEventClient.getBatch(batchId, roundTrip);
         assertEquals(batch.getEventList().size(), 0);
     }
 }
