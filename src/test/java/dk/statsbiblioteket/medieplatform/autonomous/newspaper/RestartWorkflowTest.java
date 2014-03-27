@@ -1,26 +1,17 @@
 package dk.statsbiblioteket.medieplatform.autonomous.newspaper;
 
-import dk.statsbiblioteket.doms.central.connectors.BackendInvalidCredsException;
-import dk.statsbiblioteket.doms.central.connectors.BackendInvalidResourceException;
-import dk.statsbiblioteket.doms.central.connectors.BackendMethodFailedException;
 import dk.statsbiblioteket.doms.central.connectors.EnhancedFedora;
 import dk.statsbiblioteket.doms.central.connectors.EnhancedFedoraImpl;
-import dk.statsbiblioteket.doms.central.connectors.fedora.pidGenerator.PIDGeneratorException;
 import dk.statsbiblioteket.doms.webservices.authentication.Credentials;
 import dk.statsbiblioteket.medieplatform.autonomous.Batch;
-import dk.statsbiblioteket.medieplatform.autonomous.CommunicationException;
 import dk.statsbiblioteket.medieplatform.autonomous.ConfigConstants;
-import dk.statsbiblioteket.medieplatform.autonomous.DomsEventClient;
-import dk.statsbiblioteket.medieplatform.autonomous.DomsEventClientFactory;
-import dk.statsbiblioteket.medieplatform.autonomous.NotFoundException;
+import dk.statsbiblioteket.medieplatform.autonomous.DomsEventStorage;
+import dk.statsbiblioteket.medieplatform.autonomous.DomsEventStorageFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import javax.xml.bind.JAXBException;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -32,7 +23,7 @@ import static org.testng.Assert.assertEquals;
  */
 public class RestartWorkflowTest {
 
-    private DomsEventClient domsEventClient;
+    private DomsEventStorage domsEventClient;
     private EnhancedFedora fedora;
     private String batchId = "123";
     private int roundTrip = 12;
@@ -42,12 +33,12 @@ public class RestartWorkflowTest {
         String pathToProperties = System.getProperty("integration.test.newspaper.properties");
         Properties properties = new Properties();
         properties.load(new FileInputStream(pathToProperties));
-        DomsEventClientFactory domsEventClientFactory = new DomsEventClientFactory();
+        DomsEventStorageFactory domsEventClientFactory = new DomsEventStorageFactory();
         domsEventClientFactory.setFedoraLocation(properties.getProperty(ConfigConstants.DOMS_URL));
         domsEventClientFactory.setUsername(properties.getProperty(ConfigConstants.DOMS_USERNAME));
         domsEventClientFactory.setPassword(properties.getProperty(ConfigConstants.DOMS_PASSWORD));
         domsEventClientFactory.setPidGeneratorLocation(properties.getProperty(ConfigConstants.DOMS_PIDGENERATOR_URL));
-        domsEventClient = domsEventClientFactory.createDomsEventClient();
+        domsEventClient = domsEventClientFactory.createDomsEventStorage();
         Credentials creds = new Credentials(properties.getProperty(ConfigConstants.DOMS_USERNAME), properties.getProperty(ConfigConstants.DOMS_PASSWORD));
         fedora =
                 new EnhancedFedoraImpl(creds,
