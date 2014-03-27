@@ -1,5 +1,6 @@
 1.5
-* Updated to newspaper-parent 1.1.
+* Updated to newspaper-parent 1.2
+* Updated to version 1.6 of batch event framework
 
 1.4
 * Update restart-workflow.sh script to version from JHLJ
