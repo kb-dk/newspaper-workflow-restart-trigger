@@ -1,3 +1,6 @@
+1.6
+* Updated to version 1.10 of batch event framework
+
 1.5
 * Updated to newspaper-parent 1.2
 * Updated to version 1.6 of batch event framework
