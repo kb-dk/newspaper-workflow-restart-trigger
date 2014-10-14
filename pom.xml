@@ -21,8 +21,8 @@
     <dependencies>
         <dependency>
             <groupId>dk.statsbiblioteket.newspaper</groupId>
-            <artifactId>sboi-doms-event-framework</artifactId>
-            <version>1.11-SNAPSHOT</version>
+            <artifactId>newspaper-batch-event-framework-common</artifactId>
+            <version>1.12-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <artifactId>log4j</artifactId>

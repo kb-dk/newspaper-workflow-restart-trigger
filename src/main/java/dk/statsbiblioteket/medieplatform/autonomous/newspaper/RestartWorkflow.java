@@ -1,5 +1,7 @@
 package dk.statsbiblioteket.medieplatform.autonomous.newspaper;
 
+import dk.statsbiblioteket.medieplatform.autonomous.Batch;
+import dk.statsbiblioteket.medieplatform.autonomous.BatchItemFactory;
 import dk.statsbiblioteket.medieplatform.autonomous.CommunicationException;
 import dk.statsbiblioteket.medieplatform.autonomous.ConfigConstants;
 import dk.statsbiblioteket.medieplatform.autonomous.DomsEventStorage;
@@ -41,8 +43,8 @@ public class RestartWorkflow {
      */
     public static void main(String[] args) {
 
-        DomsEventStorageFactory domsEventClientFactory = new DomsEventStorageFactory();
-        DomsEventStorage domsEventClient = null;
+        DomsEventStorageFactory<Batch> domsEventClientFactory = new DomsEventStorageFactory<Batch>();
+        DomsEventStorage<Batch> domsEventClient = null;
 
         if (args.length < 5 || args.length > 6) {
             System.out.println("Argument list is too short");
@@ -74,6 +76,7 @@ public class RestartWorkflow {
         domsEventClientFactory.setUsername(properties.getProperty(ConfigConstants.DOMS_USERNAME));
         domsEventClientFactory.setPassword(properties.getProperty(ConfigConstants.DOMS_PASSWORD));
         domsEventClientFactory.setPidGeneratorLocation(properties.getProperty(ConfigConstants.DOMS_PIDGENERATOR_URL));
+        domsEventClientFactory.setItemFactory(new BatchItemFactory());
 
         try {
             domsEventClient = domsEventClientFactory.createDomsEventStorage();
@@ -109,15 +112,15 @@ public class RestartWorkflow {
         int eventsRemoved;
         try {
             if (args.length == 5) {
-                eventsRemoved = domsEventClient.triggerWorkflowRestartFromFirstFailure(
+                eventsRemoved = domsEventClient.triggerWorkflowRestartFromFirstFailure(new Batch(
                         batchIdString,
-                        roundTrip,
+                        roundTrip),
                         maxAttempts,
                         waitTime);
             } else {
-                eventsRemoved = domsEventClient.triggerWorkflowRestartFromFirstFailure(
+                eventsRemoved = domsEventClient.triggerWorkflowRestartFromFirstFailure(new Batch(
                         batchIdString,
-                        roundTrip,
+                        roundTrip),
                         maxAttempts,
                         waitTime,
                         args[5]);
