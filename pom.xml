@@ -21,14 +21,8 @@
     <dependencies>
         <dependency>
             <groupId>dk.statsbiblioteket.newspaper</groupId>
-            <artifactId>newspaper-batch-event-framework-common</artifactId>
+            <artifactId>newspaper-autonomous-component</artifactId>
             <version>1.12-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>log4j</artifactId>
-                    <groupId>log4j</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
