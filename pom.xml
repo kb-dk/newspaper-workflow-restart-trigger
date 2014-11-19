@@ -9,20 +9,20 @@
     </parent>
 
     <artifactId>newspaper-workflow-restart-trigger</artifactId>
-    <version>1.7</version>
+    <version>1.8-SNAPSHOT</version>
 
     <scm>
         <url>https://github.com/statsbiblioteket/newspaper-workflow-restart-trigger</url>
         <connection>scm:git:https://github.com/statsbiblioteket/newspaper-workflow-restart-trigger.git</connection>
         <developerConnection>scm:git:git@github.com:statsbiblioteket/newspaper-workflow-restart-trigger.git</developerConnection>
-        <tag>newspaper-workflow-restart-trigger-1.7</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <dependencies>
         <dependency>
             <groupId>dk.statsbiblioteket.newspaper</groupId>
             <artifactId>newspaper-autonomous-component</artifactId>
-            <version>2.0</version>
+            <version>2.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
