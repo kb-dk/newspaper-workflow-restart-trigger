@@ -42,7 +42,8 @@ public class RestartWorkflowTest {
         domsEventClientFactory.setPassword(properties.getProperty(ConfigConstants.DOMS_PASSWORD));
         domsEventClientFactory.setPidGeneratorLocation(properties.getProperty(ConfigConstants.DOMS_PIDGENERATOR_URL));
         domsEventClient = domsEventClientFactory.createDomsEventStorage();
-        Credentials creds = new Credentials(properties.getProperty(ConfigConstants.DOMS_USERNAME), properties.getProperty(ConfigConstants.DOMS_PASSWORD));
+        Credentials creds = new Credentials(properties.getProperty(ConfigConstants.DOMS_USERNAME),
+                properties.getProperty(ConfigConstants.DOMS_PASSWORD));
         fedora =
                 new EnhancedFedoraImpl(creds,
                         properties.getProperty(ConfigConstants.DOMS_URL).replaceFirst("/(objects)?/?$", ""),
@@ -70,7 +71,7 @@ public class RestartWorkflowTest {
     }
 
     @Test(groups = "integrationTest")
-    public void testMain() throws Exception {
+    public void testRestart() throws Exception {
         String pathToProperties = System.getProperty("integration.test.newspaper.properties");
         Batch batch = new Batch(batchId,roundTrip);
         domsEventClient.createBatchRoundTrip(Batch.formatFullID(batchId, roundTrip));
@@ -79,11 +80,25 @@ public class RestartWorkflowTest {
         domsEventClient.addEventToItem(batch, "me", new Date(300), "details", "e3", false);
         domsEventClient.addEventToItem(batch, "me", new Date(400), "details", "e4", true);
         domsEventClient.addEventToItem(batch, "me", new Date(500), "details", "e5", false);
-        RestartWorkflow.main(new String[] {pathToProperties, batchId, roundTrip + "", "10", "100"});
+
+        RestartWorkflow.main(new String[] {"restart", pathToProperties, batchId, roundTrip + "", "10", "100"});
         batch = domsEventClient.getItemFromFullID(batch.getFullID());
         assertEquals(batch.getEventList().size(), 2);
-        RestartWorkflow.main(new String[] {pathToProperties, batchId, roundTrip + "", "10", "100", "e1"});
+
+        RestartWorkflow.main(new String[] {"restart", pathToProperties, batchId, roundTrip + "", "10", "100", "e1"});
         batch = domsEventClient.getItemFromFullID(batch.getFullID());
         assertEquals(batch.getEventList().size(), 0);
     }
+
+    @Test(groups = "integrationTest")
+    public void testAdd() throws Exception {
+        String pathToProperties = System.getProperty("integration.test.newspaper.properties");
+        Batch batch = new Batch(batchId, roundTrip);
+        domsEventClient.createBatchRoundTrip(Batch.formatFullID(batchId, roundTrip));
+
+        RestartWorkflow.main(new String[] {"add", pathToProperties, batchId, roundTrip + "", "10", "100", "e1"});
+        batch = domsEventClient.getItemFromFullID(batch.getFullID());
+        assertEquals(batch.getEventList().size(), 1);
+    }
+
 }
