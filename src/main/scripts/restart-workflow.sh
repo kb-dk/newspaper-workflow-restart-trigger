@@ -62,11 +62,9 @@ fi
 [ -z "$config" ] && print_usage && exit 2
 [ -z "$batchId" ] && print_usage && exit 3
 [ -z "$roundTrip" ] && print_usage && exit 4
+# Set defaults if not gotten
 [ -z "$maxAttempts" ] && maxAttempts=10
 [ -z "$waitTime" ] && waitTime=1000
 
-
 $JAVA_HOME/bin/java -classpath $SCRIPT_PATH/../conf/:$SCRIPT_PATH/../lib/'*' dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow \
-"$config" "$batchId" "$roundTrip" "$maxAttempts" "$waitTime" "$event"
-
-
+restart "$config" "$batchId" "$roundTrip" "$maxAttempts" "$waitTime" "$event"
