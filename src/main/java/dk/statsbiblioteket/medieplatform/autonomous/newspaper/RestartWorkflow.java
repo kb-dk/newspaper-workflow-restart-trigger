@@ -11,51 +11,71 @@ import dk.statsbiblioteket.medieplatform.autonomous.NotFoundException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Properties;
 
 /**
  * Class containing main method for a restarting batch workflow.
  */
 public class RestartWorkflow {
-
+    public enum Keyword {
+        REMOVE, ADD, RESTART
+    };
 
     /**
      * Called when there is an error in the input arguments.
      */
     private static void usage() {
-        System.out.println("Usage:" + "\n java dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow <config file> <batchId> <roundTrip> <maxAttempts> <waitTime (milliseconds> [<eventName>] ");
+        System.out.println("Usage:" + "\n java dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow <keyword> "
+                + "<config file> <batchId> <roundTrip> <maxAttempts> <waitTime (milliseconds> [<eventName>] ");
         System.exit(1);
     }
 
     /**
-     * Resets the events registered in DOMS so that the newspaper ingest workflow will be restarted. The method
-     * takes the following positional arguments:
-     * 1. path to the configuration file
-     * 2. batchId
-     * 3. roundtrip number
-     * 4. maximum attempts
-     * 5. wait-time between attempts
-     * [6. event name]
-     * Only the last argument is optional. If the event name is omitted, the workflow is restarted from the earliest
-     * failed step.
+     * Performs one of three related tasks, depending on the first argument received.
+     * Either removes a specified event, or adds a specified event, or resets the events registered in DOMS so that the newspaper
+     * ingest workflow will be restarted. The method takes the following positional arguments:
+     *
+     * 1. keyword (remove, add, or restart)
+     * 2. path to the configuration file
+     * 3. batchId
+     * 4. roundtrip number
+     * 5. maximum attempts
+     * 6. wait-time between attempts
+     * [7. event name]
+     *
+     * Only the last argument is optional, and only if the keyword is "restart". If the event name is omitted, the workflow is
+     * restarted from the earliest failed step.
      *
      * @param args The arguments to the method.
      */
     public static void main(String[] args) {
-
         DomsEventStorageFactory<Batch> domsEventClientFactory = new DomsEventStorageFactory<Batch>();
         DomsEventStorage<Batch> domsEventClient = null;
+        Keyword keyword = null;
 
-        if (args.length < 5 || args.length > 6) {
-            System.out.println("Argument list is too short");
+        if (args.length < 6 || args.length > 7 || (args.length == 6 && !args[0].equals("restart"))) {
+            System.out.println("Argument list is too short/long for given keyword");
             usage();
         }
 
-        String configFilePath = args[0];
+        String receivedKeyword = args[0];
+        if (receivedKeyword.equals("remove")) {
+            keyword = Keyword.REMOVE;
+        } else if (receivedKeyword.equals("add")) {
+            keyword = Keyword.ADD;
+        } else if (receivedKeyword.equals("restart")) {
+            keyword = Keyword.RESTART;
+        } else {
+            System.out.println("Invalid keyword");
+            System.exit(6);
+        }
+
+        String configFilePath = args[1];
         File configFile = new File(configFilePath);
         if (!configFile.exists()) {
             System.out.println("Configuration file " + configFile + " does not exist.");
-            System.exit(5);
+            System.exit(6);
         }
         Properties properties = null;
         try {
@@ -64,13 +84,13 @@ public class RestartWorkflow {
         } catch (IOException e) {
             System.out.println("Could not load properties from " + configFile.getAbsolutePath());
             e.printStackTrace();
-            System.exit(5);
+            System.exit(6);
         }
 
-        String batchIdString = args[1];
-        String roundTripString = args[2];
-        String maxAttemptsString = args[3];
-        String maxWaitString = args[4];
+        String batchIdString = args[2];
+        String roundTripString = args[3];
+        String maxAttemptsString = args[4];
+        String maxWaitString = args[5];
 
         domsEventClientFactory.setFedoraLocation(properties.getProperty(ConfigConstants.DOMS_URL));
         domsEventClientFactory.setUsername(properties.getProperty(ConfigConstants.DOMS_USERNAME));
@@ -109,9 +129,42 @@ public class RestartWorkflow {
             usage();
         }
 
+        if (keyword.equals(Keyword.REMOVE)) {
+            removeEvent(args, domsEventClient, batchIdString, roundTrip, maxAttempts, waitTime);
+        } else if (keyword.equals(Keyword.ADD)) {
+            addEvent(args, domsEventClient, batchIdString, roundTrip);
+        } else if (keyword.equals(Keyword.RESTART)) {
+            restartWorkflow(args, domsEventClient, batchIdString, roundTrip, maxAttempts, waitTime);
+        }
+    }
+
+    private static void removeEvent(String[] args, DomsEventStorage<Batch> domsEventClient, String batchIdString, int roundTrip,
+                                    int maxAttempts, long waitTime) {
+        // TODO
+    }
+
+    private static void addEvent(String[] args, DomsEventStorage<Batch> domsEventClient, String batchIdString, int roundTrip) {
+        // Set event to "true" i.e. event was successful
+        try {
+            Batch batch = domsEventClient.getItemFromFullID(Batch.formatFullID(batchIdString, roundTrip));
+
+            domsEventClient.addEventToItem(batch, "RestartWorkflow.addEvent", new Date(), "", args[6], true);
+        } catch (CommunicationException e) {
+            e.printStackTrace();
+            System.out.println("Problem communicating with DOMS.");
+            System.exit(3);
+        } catch (NotFoundException e) {
+            e.printStackTrace();
+            System.out.println("No such batch/roundtrip.");
+            System.exit(4);
+        }
+    }
+
+    private static void restartWorkflow(String[] args, DomsEventStorage<Batch> domsEventClient, String batchIdString,
+                                        int roundTrip, int maxAttempts, long waitTime) {
         int eventsRemoved;
         try {
-            if (args.length == 5) {
+            if (args.length == 6) {
                 eventsRemoved = domsEventClient.triggerWorkflowRestartFromFirstFailure(new Batch(
                         batchIdString,
                         roundTrip),
@@ -123,7 +176,7 @@ public class RestartWorkflow {
                         roundTrip),
                         maxAttempts,
                         waitTime,
-                        args[5]);
+                        args[6]);
             }
             if (eventsRemoved > 0) {
                 System.out.println("Removed " + eventsRemoved + " events from DOMS. Workflow will be re-triggered.");
@@ -141,7 +194,6 @@ public class RestartWorkflow {
             System.out.println("No such batch/roundtrip.");
             System.exit(4);
         }
-
     }
 
 }
