@@ -28,6 +28,7 @@ public class RestartWorkflow {
     private static void usage() {
         System.out.println("Usage:" + "\n java dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow <keyword> "
                 + "<config file> <batchId> <roundTrip> <maxAttempts> <waitTime (milliseconds> [<eventName>] ");
+        System.out.println("Keywords being one of: remove, add, restart");
         System.exit(1);
     }
 
@@ -53,6 +54,7 @@ public class RestartWorkflow {
         DomsEventStorageFactory<Batch> domsEventClientFactory = new DomsEventStorageFactory<Batch>();
         DomsEventStorage<Batch> domsEventClient = null;
         Keyword keyword = null;
+        String eventName = "";
 
         if (args.length < 6 || args.length > 7 || (args.length == 6 && !args[0].equals("restart"))) {
             System.out.println("Argument list is too short/long for given keyword");
@@ -129,12 +131,16 @@ public class RestartWorkflow {
             usage();
         }
 
+        if (args.length == 7) {
+            eventName = args[6];
+        }
+
         if (keyword.equals(Keyword.REMOVE)) {
             removeEvent(args, domsEventClient, batchIdString, roundTrip, maxAttempts, waitTime);
         } else if (keyword.equals(Keyword.ADD)) {
-            addEvent(args, domsEventClient, batchIdString, roundTrip);
+            addEvent(eventName, domsEventClient, batchIdString, roundTrip);
         } else if (keyword.equals(Keyword.RESTART)) {
-            restartWorkflow(args, domsEventClient, batchIdString, roundTrip, maxAttempts, waitTime);
+            restartWorkflow(eventName, domsEventClient, batchIdString, roundTrip, maxAttempts, waitTime);
         }
     }
 
@@ -143,12 +149,13 @@ public class RestartWorkflow {
         // TODO
     }
 
-    private static void addEvent(String[] args, DomsEventStorage<Batch> domsEventClient, String batchIdString, int roundTrip) {
+    private static void addEvent(String eventName, DomsEventStorage<Batch> domsEventClient, String batchIdString, int roundTrip) {
         // Set event to "true" i.e. event was successful
         try {
             Batch batch = domsEventClient.getItemFromFullID(Batch.formatFullID(batchIdString, roundTrip));
 
-            domsEventClient.addEventToItem(batch, "RestartWorkflow.addEvent", new Date(), "", args[6], true);
+            // TODO Insert proper agent name below
+            domsEventClient.addEventToItem(batch, "RestartWorkflow.addEvent", new Date(), "agent-name", eventName, true);
         } catch (CommunicationException e) {
             e.printStackTrace();
             System.out.println("Problem communicating with DOMS.");
@@ -160,11 +167,11 @@ public class RestartWorkflow {
         }
     }
 
-    private static void restartWorkflow(String[] args, DomsEventStorage<Batch> domsEventClient, String batchIdString,
+    private static void restartWorkflow(String eventName, DomsEventStorage<Batch> domsEventClient, String batchIdString,
                                         int roundTrip, int maxAttempts, long waitTime) {
         int eventsRemoved;
         try {
-            if (args.length == 6) {
+            if (eventName.isEmpty()) {
                 eventsRemoved = domsEventClient.triggerWorkflowRestartFromFirstFailure(new Batch(
                         batchIdString,
                         roundTrip),
@@ -176,7 +183,7 @@ public class RestartWorkflow {
                         roundTrip),
                         maxAttempts,
                         waitTime,
-                        args[6]);
+                        eventName);
             }
             if (eventsRemoved > 0) {
                 System.out.println("Removed " + eventsRemoved + " events from DOMS. Workflow will be re-triggered.");
