@@ -79,11 +79,11 @@ public class RestartWorkflowTest {
         domsEventClient.addEventToItem(batch, "me", new Date(400), "details", "e4", true);
         domsEventClient.addEventToItem(batch, "me", new Date(500), "details", "e5", false);
 
-        RestartWorkflow.main(new String[] {"restart", pathToProperties, batchId, roundTrip + "", "10", "100"});
+        RestartWorkflow.main(new String[] {"restart", pathToProperties, batchId, roundTrip + ""});
         batch = domsEventClient.getItemFromFullID(batch.getFullID());
         assertEquals(batch.getEventList().size(), 2);
 
-        RestartWorkflow.main(new String[] {"restart", pathToProperties, batchId, roundTrip + "", "10", "100", "e1"});
+        RestartWorkflow.main(new String[] {"restart", pathToProperties, batchId, roundTrip + "", "e1"});
         batch = domsEventClient.getItemFromFullID(batch.getFullID());
         assertEquals(batch.getEventList().size(), 0);
     }
@@ -101,7 +101,7 @@ public class RestartWorkflowTest {
             eventListStart = 0;
         }
 
-        RestartWorkflow.main(new String[]{"add", pathToProperties, batchId, roundTrip + "", "10", "100", "e1"});
+        RestartWorkflow.main(new String[]{"add", pathToProperties, batchId, roundTrip + "", "e1"});
         batch = domsEventClient.getItemFromFullID(batch.getFullID());
         assertEquals(batch.getEventList().size(), 1 + eventListStart);
     }
@@ -118,15 +118,13 @@ public class RestartWorkflowTest {
         } catch (NotFoundException e) {
             eventListStart = 0;
         }
-        System.out.println(eventListStart);
-
         domsEventClient.addEventToItem(batch, "me", new Date(100), "details", "r1", true);
         domsEventClient.addEventToItem(batch, "me", new Date(200), "details", "r2", true);
         domsEventClient.addEventToItem(batch, "me", new Date(300), "details", "r1", false);
         domsEventClient.addEventToItem(batch, "me", new Date(400), "details", "r4", true);
         domsEventClient.addEventToItem(batch, "me", new Date(500), "details", "r5", false);
 
-        RestartWorkflow.main(new String[]{"remove", pathToProperties, batchId, roundTrip + "", "10", "100", "r1"});
+        RestartWorkflow.main(new String[]{"remove", pathToProperties, batchId, roundTrip + "", "r1"});
         batch = domsEventClient.getItemFromFullID(batch.getFullID());
         assertEquals(batch.getEventList().size(), 5 + eventListStart - 2);
     }

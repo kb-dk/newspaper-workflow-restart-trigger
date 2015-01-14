@@ -38,7 +38,7 @@ public class RestartWorkflow {
      * Called when there is an error in the input arguments.
      */
     private static void usage() {
-        System.out.println("Usage:" + "\n java dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow <keyword> " + "<config file> <batchId> <roundTrip> <maxAttempts> <waitTime (milliseconds)> [<eventName>] ");
+        System.out.println("Usage:" + "\n java dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow <keyword> " + "<config file> <batchId> <roundTrip> [<eventName>] ");
         System.out.println("Keywords being one of: remove, add, restart");
     }
 
@@ -83,7 +83,7 @@ public class RestartWorkflow {
         Keyword keyword;
         String eventName = null;
 
-        if (args.length < 6 || args.length > 7 || (args.length == 6 && !args[0].equals("restart"))) {
+        if (args.length < 4 || args.length > 5 || (args.length == 4 && !args[0].equals("restart"))) {
             throw new IllegalArgumentException("Argument list is too short/long for given keyword");
         }
 
@@ -105,21 +105,6 @@ public class RestartWorkflow {
 
         String batchIdString = args[2];
         String roundTripString = args[3];
-        String maxAttemptsString = args[4];
-        String maxWaitString = args[5];
-
-        int maxAttempts;
-        try {
-            maxAttempts = Integer.parseInt(maxAttemptsString);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("maxAttempts parameter is not a number: " + maxAttemptsString, e);
-        }
-        int waitTime;
-        try {
-            waitTime = Integer.parseInt(maxWaitString);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("waitTime parameter is not a number: " + maxWaitString, e);
-        }
 
 
         DomsEventStorageFactory<Batch> domsEventClientFactory = new DomsEventStorageFactory<Batch>();
@@ -128,8 +113,14 @@ public class RestartWorkflow {
         domsEventClientFactory.setPassword(properties.getProperty(ConfigConstants.DOMS_PASSWORD));
         domsEventClientFactory.setPidGeneratorLocation(properties.getProperty(ConfigConstants.DOMS_PIDGENERATOR_URL));
         domsEventClientFactory.setItemFactory(new BatchItemFactory());
-        domsEventClientFactory.setRetries(maxAttempts);
-        domsEventClientFactory.setDelayBetweenRetries(waitTime);
+        final String retries = properties.getProperty(ConfigConstants.FEDORA_RETRIES);
+        if (retries != null) {
+            domsEventClientFactory.setRetries(Integer.parseInt(retries));
+        }
+        final String delay = properties.getProperty(ConfigConstants.FEDORA_DELAY_BETWEEN_RETRIES);
+        if (delay != null) {
+            domsEventClientFactory.setDelayBetweenRetries(Integer.parseInt(delay));
+        }
 
         DomsEventStorage<Batch> domsEventClient;
         try {
@@ -146,8 +137,8 @@ public class RestartWorkflow {
             throw new IllegalArgumentException("roundTrip parameter is not a number: " + roundTripString, e);
         }
 
-        if (args.length == 7) {
-            eventName = args[6];
+        if (args.length == 5) {
+            eventName = args[4];
         }
 
         switch (keyword) {
