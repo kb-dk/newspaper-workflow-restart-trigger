@@ -13,12 +13,10 @@ config=$(dirname $SCRIPT_PATH)/conf/config.properties
 
 print_usage()
 {
-    echo "Usage: $(basename $0) -b <batch_number> -n <round_trip_number>  [-c <config_file>] [-m <max_attempts>] [-s <max_wait>] [-e <event_name>]"
+    echo "Usage: $(basename $0) -b <batch_number> -n <round_trip_number>  [-c <config_file>] [-e <event_name>]"
     echo "-c    Path to configuration (java properties) file"
     echo "-b    The number of the batch to be reprocessed"
     echo "-n    The number of the round-trip to be reprocessed"
-    echo "-m    The maximum number of attempts (default 10)"
-    echo "-s    The maximum wait (milliseconds) between attempts (default 1000)"
     echo "-e    The name of the event at which to start reprocessing"
     echo
 }
@@ -62,9 +60,6 @@ fi
 [ -z "$config" ] && print_usage && exit 2
 [ -z "$batchId" ] && print_usage && exit 3
 [ -z "$roundTrip" ] && print_usage && exit 4
-# Set defaults if not gotten
-[ -z "$maxAttempts" ] && maxAttempts=10
-[ -z "$waitTime" ] && waitTime=1000
 
 $JAVA_HOME/bin/java -classpath $SCRIPT_PATH/../conf/:$SCRIPT_PATH/../lib/'*' dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow \
-restart "$config" "$batchId" "$roundTrip" "$maxAttempts" "$waitTime" "$event"
+restart "$config" "$batchId" "$roundTrip" "$event"
