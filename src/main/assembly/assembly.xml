@@ -22,9 +22,6 @@
             <outputDirectory>bin</outputDirectory>
             <fileMode>755</fileMode>
             <directoryMode>775</directoryMode>
-            <includes>
-                <include>restart-workflow.sh</include>
-            </includes>
         </fileSet>
         <fileSet>
             <directory>src/main/config</directory>
@@ -33,4 +30,10 @@
             <directoryMode>775</directoryMode>
         </fileSet>
     </fileSets>
+    <files>
+        <file>
+            <outputDirectory>/</outputDirectory>
+            <source>CHANGELOG.md</source>
+        </file>
+    </files>
 </assembly>
