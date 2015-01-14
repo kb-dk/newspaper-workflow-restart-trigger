@@ -12,7 +12,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.rmi.server.ServerRef;
 import java.util.Date;
 import java.util.Properties;
 
@@ -21,15 +20,17 @@ import java.util.Properties;
  */
 public class RestartWorkflow {
     public enum Keyword {
-        REMOVE, ADD, RESTART;
+        REMOVE,
+        ADD,
+        RESTART;
 
         public static Keyword parse(String receivedKeyword) {
             for (Keyword keyword : Keyword.values()) {
-                if (keyword.name().equalsIgnoreCase(receivedKeyword.trim())){
+                if (keyword.name().equalsIgnoreCase(receivedKeyword.trim())) {
                     return keyword;
                 }
             }
-            throw new IllegalArgumentException("Keyword '"+receivedKeyword+"' does not match any of the known keywords");
+            throw new IllegalArgumentException("Keyword '" + receivedKeyword + "' does not match any of the known keywords");
         }
     };
 
@@ -37,16 +38,15 @@ public class RestartWorkflow {
      * Called when there is an error in the input arguments.
      */
     private static void usage() {
-        System.out.println("Usage:" + "\n java dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow <keyword> "
-                + "<config file> <batchId> <roundTrip> <maxAttempts> <waitTime (milliseconds> [<eventName>] ");
+        System.out.println("Usage:" + "\n java dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow <keyword> " + "<config file> <batchId> <roundTrip> <maxAttempts> <waitTime (milliseconds)> [<eventName>] ");
         System.out.println("Keywords being one of: remove, add, restart");
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         try {
             doMain(args);
-        } catch (IllegalArgumentException e){
-            System.err.println("Failed to parse arguments; "+e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.err.println("Failed to parse arguments; " + e.getMessage());
             usage();
             System.exit(6);
         } catch (CommunicationException e) {
@@ -60,7 +60,8 @@ public class RestartWorkflow {
 
     /**
      * Performs one of three related tasks, depending on the first argument received.
-     * Either removes a specified event, or adds a specified event, or resets the events registered in DOMS so that the newspaper
+     * Either removes a specified event, or adds a specified event, or resets the events registered in DOMS so that the
+     * newspaper
      * ingest workflow will be restarted. The method takes the following positional arguments:
      *
      * 1. keyword (remove, add, or restart)
@@ -71,7 +72,8 @@ public class RestartWorkflow {
      * 6. wait-time between attempts
      * [7. event name]
      *
-     * Only the last argument is optional, and only if the keyword is "restart". If the event name is omitted, the workflow is
+     * Only the last argument is optional, and only if the keyword is "restart". If the event name is omitted, the
+     * workflow is
      * restarted from the earliest failed step.
      *
      * @param args The arguments to the method.
@@ -94,10 +96,11 @@ public class RestartWorkflow {
         try {
             properties = new Properties();
             properties.load(new FileInputStream(configFile));
-        } catch (FileNotFoundException e){
-            throw new IllegalArgumentException("Configuration file " + configFile.getAbsolutePath() + " does not exist.",e);
-        } catch ( IOException e) {
-            throw new IllegalArgumentException("Could not load properties from " + configFile.getAbsolutePath(),e);
+        } catch (FileNotFoundException e) {
+            throw new IllegalArgumentException("Configuration file " + configFile.getAbsolutePath() + " does not exist.",
+                                                      e);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not load properties from " + configFile.getAbsolutePath(), e);
         }
 
         String batchIdString = args[2];
@@ -105,18 +108,34 @@ public class RestartWorkflow {
         String maxAttemptsString = args[4];
         String maxWaitString = args[5];
 
+        int maxAttempts;
+        try {
+            maxAttempts = Integer.parseInt(maxAttemptsString);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("maxAttempts parameter is not a number: " + maxAttemptsString, e);
+        }
+        int waitTime;
+        try {
+            waitTime = Integer.parseInt(maxWaitString);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("waitTime parameter is not a number: " + maxWaitString, e);
+        }
+
+
         DomsEventStorageFactory<Batch> domsEventClientFactory = new DomsEventStorageFactory<Batch>();
         domsEventClientFactory.setFedoraLocation(properties.getProperty(ConfigConstants.DOMS_URL));
         domsEventClientFactory.setUsername(properties.getProperty(ConfigConstants.DOMS_USERNAME));
         domsEventClientFactory.setPassword(properties.getProperty(ConfigConstants.DOMS_PASSWORD));
         domsEventClientFactory.setPidGeneratorLocation(properties.getProperty(ConfigConstants.DOMS_PIDGENERATOR_URL));
         domsEventClientFactory.setItemFactory(new BatchItemFactory());
+        domsEventClientFactory.setRetries(maxAttempts);
+        domsEventClientFactory.setDelayBetweenRetries(waitTime);
 
         DomsEventStorage<Batch> domsEventClient;
         try {
             domsEventClient = domsEventClientFactory.createDomsEventStorage();
         } catch (Exception e) {
-            throw new CommunicationException("Error connecting to DOMS.",e);
+            throw new CommunicationException("Error connecting to DOMS.", e);
         }
 
 
@@ -124,41 +143,30 @@ public class RestartWorkflow {
         try {
             roundTrip = Integer.parseInt(roundTripString);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("roundTrip parameter is not a number: " + roundTripString,e);
-        }
-        int maxAttempts;
-        try {
-            maxAttempts = Integer.parseInt(maxAttemptsString);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("maxAttempts parameter is not a number: " + maxAttemptsString,e);
-        }
-        long waitTime;
-        try {
-            waitTime = Long.parseLong(maxWaitString);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("waitTime parameter is not a number: " + maxWaitString,e);
+            throw new IllegalArgumentException("roundTrip parameter is not a number: " + roundTripString, e);
         }
 
         if (args.length == 7) {
             eventName = args[6];
         }
 
-        if (keyword.equals(Keyword.REMOVE)) {
-            removeEvent(eventName, domsEventClient, batchIdString, roundTrip, maxAttempts, waitTime);
-        } else if (keyword.equals(Keyword.ADD)) {
-            addEvent(eventName, domsEventClient, batchIdString, roundTrip);
-        } else if (keyword.equals(Keyword.RESTART)) {
-            restartWorkflow(eventName, domsEventClient, batchIdString, roundTrip, maxAttempts, waitTime);
+        switch (keyword) {
+            case ADD:
+                addEvent(eventName, domsEventClient, batchIdString, roundTrip);
+                break;
+            case REMOVE:
+                removeEvent(eventName, domsEventClient, batchIdString, roundTrip);
+                break;
+            case RESTART:
+                restartWorkflow(eventName, domsEventClient, batchIdString, roundTrip);
+                break;
         }
     }
 
     private static void removeEvent(String eventName, DomsEventStorage<Batch> domsEventClient, String batchId,
-                                    int roundTrip, int maxAttempts, long waitTime) throws
-                                                                                   CommunicationException,
-                                                                                   NotFoundException {
-        // Set event to "true" i.e. event was successful
+                                    int roundTrip) throws CommunicationException, NotFoundException {
         Batch batch = domsEventClient.getItemFromFullID(Batch.formatFullID(batchId, roundTrip));
-        domsEventClient.removeEventFromItem(batch, maxAttempts, waitTime,eventName);
+        domsEventClient.removeEventFromItem(batch, eventName);
     }
 
     private static void addEvent(String eventName, DomsEventStorage<Batch> domsEventClient, String batchId,
@@ -166,23 +174,26 @@ public class RestartWorkflow {
         // Set event to "true" i.e. event was successful
         Batch batch = domsEventClient.getItemFromFullID(Batch.formatFullID(batchId, roundTrip));
 
-        // TODO Insert proper agent name below
-        domsEventClient.addEventToItem(batch, "RestartWorkflow.addEvent", new Date(), "agent-name", eventName, true);
+        final String agent;
+        if (getComponentVersion() != null) {
+            agent = getComponentName() + "-" + getComponentVersion();
+        } else {
+            agent = getComponentName();
+        }
+        domsEventClient.addEventToItem(batch, agent,
+                                              new Date(),
+                                              agent,
+                                              eventName,
+                                              true);
     }
 
     private static void restartWorkflow(String eventName, DomsEventStorage<Batch> domsEventClient, String batchIdString,
-                                        int roundTrip, int maxAttempts, long waitTime) throws
-                                                                                       CommunicationException,
-                                                                                       NotFoundException {
+                                        int roundTrip) throws CommunicationException, NotFoundException {
         int eventsRemoved;
         if (eventName == null || eventName.trim().isEmpty()) {
-            eventsRemoved = domsEventClient.triggerWorkflowRestartFromFirstFailure(new Batch(batchIdString, roundTrip),
-                                                                                          maxAttempts,
-                                                                                          waitTime);
+            eventsRemoved = domsEventClient.triggerWorkflowRestartFromFirstFailure(new Batch(batchIdString, roundTrip));
         } else {
             eventsRemoved = domsEventClient.triggerWorkflowRestartFromFirstFailure(new Batch(batchIdString, roundTrip),
-                                                                                          maxAttempts,
-                                                                                          waitTime,
                                                                                           eventName);
         }
         if (eventsRemoved > 0) {
@@ -190,7 +201,13 @@ public class RestartWorkflow {
         } else {
             System.out.println("Did not remove any events from DOMS. This operation had no effect.");
         }
-
     }
 
+    public static String getComponentName() {
+        return RestartWorkflow.class.getSimpleName();
+    }
+
+    public static String getComponentVersion() {
+        return RestartWorkflow.class.getPackage().getImplementationVersion();
+    }
 }
