@@ -5,8 +5,6 @@ import dk.statsbiblioteket.doms.central.connectors.EnhancedFedoraImpl;
 import dk.statsbiblioteket.doms.webservices.authentication.Credentials;
 import dk.statsbiblioteket.medieplatform.autonomous.Batch;
 import dk.statsbiblioteket.medieplatform.autonomous.ConfigConstants;
-import dk.statsbiblioteket.medieplatform.autonomous.DomsEventStorage;
-import dk.statsbiblioteket.medieplatform.autonomous.DomsEventStorageFactory;
 import dk.statsbiblioteket.medieplatform.autonomous.NewspaperDomsEventStorage;
 import dk.statsbiblioteket.medieplatform.autonomous.NewspaperDomsEventStorageFactory;
 import dk.statsbiblioteket.medieplatform.autonomous.NotFoundException;
@@ -113,12 +111,6 @@ public class RestartWorkflowTest {
         String pathToProperties = System.getProperty("integration.test.newspaper.properties");
         Batch batch = new Batch(batchId, roundTrip);
         domsEventClient.createBatchRoundTrip(Batch.formatFullID(batchId, roundTrip));
-        domsEventClient.addEventToItem(batch, "me", new Date(100), "details", "e1", true);
-        domsEventClient.addEventToItem(batch, "me", new Date(200), "details", "e2", true);
-        domsEventClient.addEventToItem(batch, "me", new Date(300), "details", "e1", false);
-        domsEventClient.addEventToItem(batch, "me", new Date(400), "details", "e4", true);
-        domsEventClient.addEventToItem(batch, "me", new Date(500), "details", "e5", false);
-
         int eventListStart;
         try {
             batch = domsEventClient.getItemFromFullID(batch.getFullID());
@@ -126,8 +118,16 @@ public class RestartWorkflowTest {
         } catch (NotFoundException e) {
             eventListStart = 0;
         }
-        RestartWorkflow.main(new String[]{"remove", pathToProperties, batchId, roundTrip + "", "10", "100","e1"});
+        System.out.println(eventListStart);
+
+        domsEventClient.addEventToItem(batch, "me", new Date(100), "details", "r1", true);
+        domsEventClient.addEventToItem(batch, "me", new Date(200), "details", "r2", true);
+        domsEventClient.addEventToItem(batch, "me", new Date(300), "details", "r1", false);
+        domsEventClient.addEventToItem(batch, "me", new Date(400), "details", "r4", true);
+        domsEventClient.addEventToItem(batch, "me", new Date(500), "details", "r5", false);
+
+        RestartWorkflow.main(new String[]{"remove", pathToProperties, batchId, roundTrip + "", "10", "100", "r1"});
         batch = domsEventClient.getItemFromFullID(batch.getFullID());
-        assertEquals(batch.getEventList().size(), 5+eventListStart-2);
+        assertEquals(batch.getEventList().size(), 5 + eventListStart - 2);
     }
 }
