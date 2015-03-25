@@ -19,10 +19,15 @@ import java.util.Properties;
  * Class containing main method for a restarting batch workflow.
  */
 public class RestartWorkflow {
+    
+    private final static int ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
+    public final static String PRIORITY_EVENT_NAME = "Prioritized";
+    
     public enum Keyword {
         REMOVE,
         ADD,
-        RESTART;
+        RESTART, 
+        PRIORITIZE;
 
         public static Keyword parse(String receivedKeyword) {
             for (Keyword keyword : Keyword.values()) {
@@ -151,6 +156,9 @@ public class RestartWorkflow {
             case RESTART:
                 restartWorkflow(eventName, domsEventClient, batchIdString, roundTrip);
                 break;
+            case PRIORITIZE:
+                prioritizeRoundtrip(eventName, domsEventClient, batchIdString, roundTrip);
+                break;
         }
     }
 
@@ -171,7 +179,7 @@ public class RestartWorkflow {
         } else {
             agent = getComponentName();
         }
-        domsEventClient.addEventToItem(batch, agent,
+        domsEventClient.appendEventToItem(batch, agent,
                                               new Date(),
                                               agent,
                                               eventName,
@@ -193,7 +201,30 @@ public class RestartWorkflow {
             System.out.println("Did not remove any events from DOMS. This operation had no effect.");
         }
     }
+    
+    private static void prioritizeRoundtrip(String priority, DomsEventStorage<Batch> domsEventClient, String batchId,
+            int roundTrip) throws CommunicationException, NotFoundException {
+        final String agent = getAgentString();
+        int priorityVal = Integer.parseInt(priority);
+        if(priorityVal < 1 || priorityVal > 9) {
+            throw new RuntimeException("The priority value is outside it's allowed range [1-9]");
+        }
+        
+        Date fakeEventDate = new Date(ONE_DAY_IN_MS * priorityVal);
+        Batch batch = domsEventClient.getItemFromFullID(Batch.formatFullID(batchId, roundTrip));
+        domsEventClient.prependEventToItem(batch, agent, fakeEventDate, agent, PRIORITY_EVENT_NAME, true);
+    }
 
+    private static String getAgentString() {
+        final String agent;
+        if (getComponentVersion() != null) {
+            agent = getComponentName() + "-" + getComponentVersion();
+        } else {
+            agent = getComponentName();
+        }
+        return agent;
+    }
+    
     public static String getComponentName() {
         return RestartWorkflow.class.getSimpleName();
     }
