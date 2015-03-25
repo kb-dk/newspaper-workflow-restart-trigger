@@ -44,7 +44,7 @@ public class RestartWorkflow {
      */
     private static void usage() {
         System.out.println("Usage:" + "\n java dk.statsbiblioteket.medieplatform.autonomous.newspaper.RestartWorkflow <keyword> " + "<config file> <batchId> <roundTrip> [<eventName>] ");
-        System.out.println("Keywords being one of: remove, add, restart");
+        System.out.println("Keywords being one of: remove, add, restart, prioritize");
     }
 
     public static void main(String[] args) {

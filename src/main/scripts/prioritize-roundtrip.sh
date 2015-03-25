@@ -9,7 +9,7 @@ config=$(dirname $SCRIPT_PATH)/conf/config.properties
 
 print_usage()
 {
-    echo "Usage: $(basename $0) -b <batch_number> -n <round_trip_number>  [-c <config_file>]  [-p <priority>]"
+    echo "Usage: $(basename $0) -b <batch_number> -n <round_trip_number>  [-c <config_file>]  -p <priority>"
     echo '-b    The Batch ID for which to add an event'
     echo '-n    The number of the round-trip for which to add an event'
     echo '-c    Path to configuration (java properties) file'
