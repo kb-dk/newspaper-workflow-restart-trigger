@@ -1,3 +1,8 @@
+1.9
+* Add prioritize-roundtrip functionality
+* Update to version 2.7 of item event framework for support of prepending events to premis
+* Fix 'statsbibliokeket'-typo
+
 1.8
 * added the add-event.sh and remove-event.sh scripts
 * retrying on fedora 409 is controlled by the config file, not the command line. Config file have changed.
